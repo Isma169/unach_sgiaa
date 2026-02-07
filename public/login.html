@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso | Sistema SGIAA</title>
+        <link rel="icon" type="image/png" href="LOGO_U_FULLCOLOR.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            /* --- CAMBIO AQUÍ --- */
+            /* Reemplaza 'fondo_universidad.jpg' por el nombre de tu archivo o un enlace https://... */
+            background-image: url('fondo_universidad.jpg'); 
+            
+            /* Esto asegura que la imagen cubra todo el fondo */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            
+            /* Opcional: Esto añade una capa oscura semitransparente sobre la foto para que resalte el formulario */
+            /* Si no quieres la capa oscura, borra la siguiente línea de background-color y la de background-blend-mode */
+            background-color: rgba(0, 0, 0, 0.5);
+            background-blend-mode: overlay;
+
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .card-login { 
+            width: 100%; 
+            max-width: 400px; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Sombra un poco más fuerte para contraste */
+        }
+        .login-header { background: white; padding: 25px; text-align: center; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+    <div class="card card-login">
+        <div class="login-header">
+            <img src="logo_unach_2021-02.png" style="max-width: 160px;" alt="Logo Institucional">
+            <p class="text-muted mb-0 mt-2 small">Sistema de Gestión Académica</p>
+        </div>
+        
+        <div class="card-body p-4 bg-white">
+            <ul class="nav nav-tabs nav-fill mb-4" id="loginTab">
+                <li class="nav-item"><button class="nav-link active" id="tab-login" data-bs-toggle="tab" data-bs-target="#panel-login">Ingresar</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-registro" data-bs-toggle="tab" data-bs-target="#panel-registro">Registrarse</button></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="panel-login">
+                    <form id="form-login" onsubmit="event.preventDefault(); return false;">
+                        <div class="mb-3">
+                            <input type="email" id="log_correo" class="form-control" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" id="log_pass" class="form-control" placeholder="Contraseña" required>
+                        </div>
+                        <button type="button" onclick="hacerLogin()" class="btn btn-primary w-100">INICIAR SESIÓN</button>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="panel-registro">
+                    <form id="form-registro" onsubmit="event.preventDefault(); return false;">
+                        <div class="mb-2"><input type="text" id="reg_nombre" class="form-control" placeholder="Nombre Completo" required></div>
+                        <div class="mb-2"><input type="email" id="reg_correo" class="form-control" placeholder="ejemplo@gmail.com" required></div>
+                        <div class="mb-2"><input type="password" id="reg_pass" class="form-control" placeholder="Contraseña" required></div>
+                        <div class="mb-3">
+                            <select id="reg_rol" class="form-select">
+                                <option value="estudiante">Estudiante</option>
+                                <option value="docente">Docente</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="hacerRegistro()" class="btn btn-success w-100">CREAR CUENTA</button>
+                    </form>
+
+                    <div id="seccion-verificacion" style="display: none; text-align: center;">
+                        <div class="alert alert-info py-2 small">Revisa tu bandeja de entrada (o Spam).</div>
+                        <input type="text" id="input_codigo" class="form-control text-center mb-3 fs-4" placeholder="CÓDIGO" maxlength="6">
+                        <button type="button" class="btn btn-warning w-100 fw-bold" onclick="verificarCodigo()">VERIFICAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let correoPendiente = "";
+
+        async function hacerLogin() {
+            const correo = document.getElementById('log_correo').value;
+            const password = document.getElementById('log_pass').value;
+
+            try {
+                const res = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ correo, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('usuario_rol', data.usuario.rol);
+                    localStorage.setItem('usuario_id', data.usuario.id);
+                    localStorage.setItem('usuario_nombre', data.usuario.nombre);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert(data.mensaje);
+                }
+            } catch (error) { alert("Error de conexión"); }
+        }
+
+        async function hacerRegistro() {
+            const datos = {
+                nombre: document.getElementById('reg_nombre').value,
+                correo: document.getElementById('reg_correo').value,
+                password: document.getElementById('reg_pass').value,
+                rol: document.getElementById('reg_rol').value
+            };
+
+            try {
+                const res = await fetch('http://localhost:3000/api/usuarios', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(datos)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('form-registro').style.display = 'none';
+                    document.getElementById('seccion-verificacion').style.display = 'block';
+                    correoPendiente = datos.correo;
+                    alert("¡Código enviado! Revisa tu correo (incluso carpeta Spam)");
+                } else {
+                    alert(data.mensaje);
+                }
+            } catch (error) { alert("Error de conexión"); }
+        }
+
+        async function verificarCodigo() {
+            const codigo = document.getElementById('input_codigo').value;
+            try {
+                const res = await fetch('http://localhost:3000/api/verificar', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ correo: correoPendiente, codigo })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert("Cuenta verificada. Inicia sesión.");
+                    location.reload(); 
+                } else {
+                    alert(data.mensaje);
+                }
+            } catch (error) { alert("Error de conexión"); }
+        }
+    </script>
+</body>
+</html>

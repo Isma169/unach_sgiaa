@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Estudiantes | UNACH</title>
+        <link rel="icon" type="image/png" href="LOGO_U_FULLCOLOR.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #2c3e50; color: white; width: 250px; position: fixed; }
+        .sidebar a { color: #bdc3c7; text-decoration: none; padding: 15px 20px; display: block; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: #fff; border-left-color: #3498db; }
+        .main-content { margin-left: 250px; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar d-flex flex-column p-3">
+        <div class="text-center py-3 border-bottom border-secondary">
+            <img src="logo_unach_2021-02.png" class="img-fluid" style="max-width: 180px;">
+        </div>
+        <ul class="list-unstyled mt-3">
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-2 mb-1">Principal</li>
+            <li><a href="dashboard.html"><i class="fas fa-home me-3"></i> Inicio</a></li>
+            
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1">Gestión</li>
+            <li id="menu-estudiantes"><a href="estudiantes.html"><i class="fas fa-user-graduate me-3"></i> Estudiantes</a></li>
+            <li id="menu-docentes"><a href="docentes.html"><i class="fas fa-chalkboard-teacher me-3"></i> Docentes</a></li>
+            <li id="menu-materias"><a href="materias.html"><i class="fas fa-book me-3"></i> Materias</a></li>
+
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1">Recursos</li>
+            <li><a href="repositorio.html"><i class="fas fa-folder-open me-3"></i> Repositorio</a></li>
+            
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1">Cuenta</li>
+            <li><a href="perfil.html"><i class="fas fa-user-circle me-3"></i> Mi Perfil</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2 class="mb-4 text-primary"><i class="fas fa-user-graduate me-2"></i>Listado de Estudiantes</h2>
+
+        <div class="d-flex justify-content-end mb-3">
+            <button id="btn-nuevo-est" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrear">
+                <i class="fas fa-plus me-2"></i> Nuevo Estudiante
+            </button>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-estudiantes"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCrear" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Registrar Estudiante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-crear">
+                        <div class="mb-3"><label>Nombre Completo</label><input type="text" id="crear-nombre" class="form-control" required></div>
+                        <div class="mb-3"><label>Correo</label><input type="email" id="crear-correo" class="form-control" required></div>
+                        <div class="mb-3"><label>Contraseña</label><input type="password" id="crear-pass" class="form-control" required></div>
+                        <button type="button" onclick="guardarEstudiante()" class="btn btn-primary w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function cargarEstudiantes() {
+            try {
+                const res = await fetch('http://localhost:3000/api/usuarios');
+                const usuarios = await res.json();
+                const tabla = document.getElementById('tabla-estudiantes');
+                tabla.innerHTML = '';
+
+                // Filtro para "estudiante"
+                const estudiantes = usuarios.filter(u => u.rol && u.rol.toLowerCase() === 'estudiante');
+                const rolActual = localStorage.getItem('usuario_rol');
+
+                estudiantes.forEach((e, index) => {
+                    const estado = e.es_verificado === 1 
+                        ? '<span class="badge bg-success">Activo</span>' 
+                        : '<span class="badge bg-warning text-dark">Pendiente</span>';
+
+                    let botonEliminar = '';
+                    // 🔒 SOLO EL ADMIN PUEDE VER EL BOTÓN BORRAR
+                    if (rolActual === 'admin') {
+                        botonEliminar = `
+                            <button class="btn btn-sm btn-danger" onclick="eliminarUsuario(${e.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>`;
+                    }
+                    // (Si es estudiante o docente, botonEliminar se queda vacío, así que no pueden borrar)
+
+                    tabla.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${e.nombre}</td>
+                            <td>${e.correo}</td>
+                            <td>${estado}</td>
+                            <td class="text-center">${botonEliminar}</td>
+                        </tr>
+                    `;
+                });
+                
+                aplicarPermisos();
+                
+            } catch (error) { console.error(error); }
+        }
+
+        async function guardarEstudiante() {
+            const nombre = document.getElementById('crear-nombre').value;
+            const correo = document.getElementById('crear-correo').value;
+            const password = document.getElementById('crear-pass').value;
+
+            const res = await fetch('http://localhost:3000/api/usuarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, correo, password, rol: 'estudiante' })
+            });
+
+            if (res.ok) {
+                alert("Estudiante registrado");
+                location.reload();
+            } else { alert("Error al registrar"); }
+        }
+
+        async function eliminarUsuario(id) {
+            if(!confirm("¿Eliminar estudiante?")) return;
+            await fetch(`http://localhost:3000/api/usuarios/${id}`, { method: 'DELETE' });
+            cargarEstudiantes();
+        }
+
+        function aplicarPermisos() {
+            const rol = localStorage.getItem('usuario_rol');
+            
+            // --- ESTUDIANTE ---
+            if (rol === 'estudiante' || rol === 'Estudiante') {
+                // YA NO ocultamos el menú, ahora pueden ver "Estudiantes" y "Docentes"
+                
+                // Pero SÍ ocultamos el botón de crear nuevo
+                const btnNuevo = document.getElementById('btn-nuevo-est');
+                if(btnNuevo) btnNuevo.style.display = 'none';
+            }
+
+            // --- DOCENTE ---
+            if (rol === 'docente' || rol === 'Docente') {
+                const btnNuevo = document.getElementById('btn-nuevo-est');
+                if(btnNuevo) btnNuevo.style.display = 'none';
+            }
+        }
+
+        // AUTO-ACTIVAR MENÚ
+        document.addEventListener("DOMContentLoaded", () => {
+            const path = window.location.pathname;
+            const paginaActual = path.split("/").pop(); 
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === paginaActual) link.classList.add('active');
+            });
+            cargarEstudiantes();
+        });
+    </script>
+</body>
+</html>

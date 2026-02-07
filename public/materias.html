@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Malla Curricular | UNACH</title>
+        <link rel="icon" type="image/png" href="LOGO_U_FULLCOLOR.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #2c3e50; color: white; width: 250px; position: fixed; }
+        .sidebar a { color: #bdc3c7; text-decoration: none; padding: 15px 20px; display: block; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: #fff; border-left-color: #3498db; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        
+        /* Estilo para las cabeceras de los semestres */
+        .header-semestre {
+            background: linear-gradient(45deg, #003b6f, #0056b3);
+            color: white;
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar d-flex flex-column p-3">
+        <div class="text-center py-3 border-bottom border-secondary">
+    
+    <img src="logo_unach_2021-02.png" 
+         class="img-fluid" 
+         style="max-width: 180px; height: auto;">
+         
+</div>
+        <ul class="list-unstyled mt-3">
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-2 mb-1" id="tit-principal">Principal</li>
+    
+    <li><a href="dashboard.html"><i class="fas fa-home me-3"></i> <span id="txt-inicio">Inicio</span></a></li>
+    
+    
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1" id="tit-gestion">Gestión</li>
+    
+    <li id="menu-estudiantes"><a href="estudiantes.html"><i class="fas fa-user-graduate me-3"></i> <span id="txt-estudiantes">Estudiantes</span></a></li>
+    <li id="menu-docentes"><a href="docentes.html"><i class="fas fa-chalkboard-teacher me-3"></i> <span id="txt-docentes">Docentes</span></a></li>
+    <li id="menu-materias"><a href="materias.html"><i class="fas fa-book me-3"></i> <span id="txt-materias">Materias</span></a></li>
+
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1">Recursos</li>
+            <li><a href="repositorio.html"><i class="fas fa-folder-open me-3"></i> Repositorio</a></li>
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1" style="font-size: 0.75rem;">Mi Cuenta</li>
+            <li><a href="perfil.html"><i class="fas fa-user-circle me-3"></i> Mi Perfil</a></li>
+</ul>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary"><i class="fas fa-layer-group me-2"></i>Malla Curricular</h2>
+            
+            <button class="btn btn-success btn-agregar" data-bs-toggle="modal" data-bs-target="#modalMateria">
+                <i class="fas fa-plus me-2"></i>Nueva Materia
+            </button>
+        </div>
+
+        <div class="row g-4" id="contenedor-semestres">
+            </div>
+
+    </div>
+
+    <div class="modal fade" id="modalMateria" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Agregar Nueva Asignatura</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formMateria" onsubmit="guardarMateria(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre de la Asignatura</label>
+                            <input type="text" id="nombreMateria" class="form-control" required placeholder="Ej: Programación I">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Código</label>
+                                <input type="text" id="codigoMateria" class="form-control" required placeholder="Ej: TICS-101">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Semestre</label>
+                                <select id="semestreMateria" class="form-select" required>
+                                    <option value="1">1er Semestre</option>
+                                    <option value="2">2do Semestre</option>
+                                    <option value="3">3er Semestre</option>
+                                    <option value="4">4to Semestre</option>
+                                    <option value="5">5to Semestre</option>
+                                    <option value="6">6to Semestre</option>
+                                    <option value="7">7mo Semestre</option>
+                                    <option value="8">8vo Semestre</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-end">
+                            <button type="submit" class="btn btn-primary w-100">Guardar Asignatura</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 1. GENERAR LA ESTRUCTURA DE LOS 8 SEMESTRES
+        function dibujarSemestres() {
+            const contenedor = document.getElementById('contenedor-semestres');
+            contenedor.innerHTML = '';
+            
+            for (let i = 1; i <= 8; i++) {
+                contenedor.innerHTML += `
+                    <div class="col-md-6 col-lg-4"> <div class="card shadow-sm h-100 border-0">
+                            <div class="header-semestre d-flex justify-content-between">
+                                <span>${i}° Semestre</span>
+                                <i class="fas fa-book-open opacity-50"></i>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-striped table-hover mb-0 text-sm">
+                                    <tbody id="lista-semestre-${i}">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 2. CARGAR MATERIAS Y DISTRIBUIRLAS
+        async function cargarMaterias() {
+            try {
+                // Primero dibujamos los cuadros vacíos
+                dibujarSemestres();
+
+                const res = await fetch('http://localhost:3000/api/materias');
+                const materias = await res.json();
+                
+                materias.forEach(m => {
+                    // Buscamos la cajita correspondiente al semestre de esta materia
+                    // (Si la materia no tiene semestre, asumimos 1 por defecto)
+                    const semestre = m.semestre || 1;
+                    const lista = document.getElementById(`lista-semestre-${semestre}`);
+                    
+                    if (lista) {
+                        lista.innerHTML += `
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-bold text-dark">${m.nombre}</div>
+                                    <small class="text-muted" style="font-size: 0.8rem">${m.codigo}</small>
+                                </td>
+                                <td class="text-end pe-2 align-middle">
+                                    <button class="btn btn-sm btn-link text-danger btn-borrar" onclick="eliminarMateria(${m.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+                
+                // Reaplicar permisos después de dibujar todo
+                aplicarPermisos();
+                
+            } catch (error) { console.error(error); }
+        }
+
+        // 3. GUARDAR NUEVA MATERIA
+        async function guardarMateria(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombreMateria').value;
+            const codigo = document.getElementById('codigoMateria').value;
+            const semestre = document.getElementById('semestreMateria').value; // Nuevo campo
+
+            if(!nombre || !codigo) return alert("Completa los datos");
+
+            try {
+                await fetch('http://localhost:3000/api/materias', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ nombre, codigo, semestre })
+                });
+
+                // Cerrar modal y recargar
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalMateria'));
+                modal.hide();
+                document.getElementById('formMateria').reset();
+                cargarMaterias();
+
+            } catch (error) { console.error(error); }
+        }
+
+        // 4. ELIMINAR MATERIA
+        async function eliminarMateria(id) {
+            if(confirm('¿Seguro que deseas eliminar esta asignatura de la malla?')) {
+                await fetch(`http://localhost:3000/api/materias/${id}`, { method: 'DELETE' });
+                cargarMaterias();
+            }
+        }
+
+        // 5. SISTEMA DE PERMISOS (CORREGIDO PARA ESTUDIANTES)
+        function aplicarPermisos() {
+            const rol = localStorage.getItem('usuario_rol');
+            if (!rol) window.location.href = 'login.html';
+
+            // ESTUDIANTE: Puede ver todo el menú, pero NO puede editar
+            if (rol === 'estudiante' || rol === 'Estudiante') {
+                // *** AQUÍ YA NO OCULTAMOS EL MENÚ ***
+                
+                // Ocultar botones de agregar y borrar
+                const btnsAgregar = document.querySelectorAll('.btn-agregar');
+                btnsAgregar.forEach(b => b.style.display = 'none');
+                
+                const btnsBorrar = document.querySelectorAll('.btn-borrar');
+                btnsBorrar.forEach(b => b.style.display = 'none');
+            }
+
+            // DOCENTE: Puede ver todo el menú, pero NO puede editar
+            if (rol === 'docente' || rol === 'Docente') {
+                // Docentes ven materias pero no borran
+                const btnsAgregar = document.querySelectorAll('.btn-agregar');
+                btnsAgregar.forEach(b => b.style.display = 'none');
+                
+                const btnsBorrar = document.querySelectorAll('.btn-borrar');
+                btnsBorrar.forEach(b => b.style.display = 'none');
+            }
+        }
+
+        function cerrarSesion() { localStorage.clear(); window.location.href = "login.html"; }
+
+        // INICIAR
+        document.addEventListener("DOMContentLoaded", () => {
+            cargarMaterias();
+        });
+
+    </script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // 1. Obtener el nombre del archivo actual (ej: materias.html)
+            const path = window.location.pathname;
+            const paginaActual = path.split("/").pop(); 
+
+            // 2. Buscar todos los enlaces de la barra lateral
+            const links = document.querySelectorAll('.sidebar a');
+
+            // 3. Recorrerlos y activar el correcto
+            links.forEach(link => {
+                link.classList.remove('active'); // Limpia marcas anteriores
+                if (link.getAttribute('href') === paginaActual) {
+                    link.classList.add('active'); // Marca el actual
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
