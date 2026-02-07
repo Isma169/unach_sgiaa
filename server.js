@@ -8,7 +8,6 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
 
 // --- 1. CONFIGURACIÓN "TODO TERRENO" ---
 // Esto permite que el servidor encuentre tus HTML donde sea que estén (en 'public' o en la raíz)
@@ -16,11 +15,20 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));      // Busca en carpeta public
 app.use(express.static(__dirname));     // Busca en la carpeta raíz (DONDE ESTÁS AHORA)
-
+app.get('/',(req, res) => {
+    res.sendFile(path.join(_dirname,'public','login','index.html'));
+    });
 // Evitar que se apague el servidor por errores
 process.on('uncaughtException', (err) => {
     console.log('⚠️ Alerta: Ocurrió un error, pero el servidor sigue vivo.');
     console.error(err);
+});
+
+// Puerto para Railway
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log('Servidor corriendo en puerto ' + PORT);
 });
 
 // --- 2. BASE DE DATOS ---
@@ -181,5 +189,6 @@ app.get('/api/stats', (req, res) => {
         res.json(stats);
     });
 });
+
 
 app.listen(PORT, () => console.log(`🚀 SERVIDOR LISTO: http://localhost:${PORT}/login.html`));
