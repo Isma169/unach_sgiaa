@@ -32,11 +32,15 @@ app.listen(PORT, () => {
 });
 
 // --- 2. BASE DE DATOS ---
-const db = mysql.createConnection({
-    host: 'localhost', user: 'root', password: '', database: 'unach_sgiaa'
+const connection = mysql.createConnection({
+    host: process.env.MYSQLHOST, 
+    user: process.envMYSQLUSER, 
+    password: process.envMYSQLPASSWORD, 
+    database: process.envMYSQLDATABASE,
+    port: process.env.MYSQLPORT
 });
-db.connect(err => {
-    if (err) console.error('❌ Error Base de Datos (¿Prendiste XAMPP?):', err.message);
+connection.connect(err => {
+    if (err) console.error('❌ Error Base de Datos:', err.message);
     else console.log('✅ Base de Datos Conectada');
 });
 
@@ -192,4 +196,5 @@ app.get('/api/stats', (req, res) => {
 
 
 app.listen(PORT, () => console.log(`🚀 SERVIDOR LISTO: http://localhost:${PORT}/login.html`));
+
 
