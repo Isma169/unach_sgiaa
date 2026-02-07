@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));      // Busca en carpeta public
 app.use(express.static(__dirname));     // Busca en la carpeta raíz (DONDE ESTÁS AHORA)
 app.get('/',(req, res) => {
-    res.sendFile(path.join(_dirname,'public','login','index.html'));
+    res.redirect('/public/ index.html');
     });
 // Evitar que se apague el servidor por errores
 process.on('uncaughtException', (err) => {
@@ -192,3 +192,4 @@ app.get('/api/stats', (req, res) => {
 
 
 app.listen(PORT, () => console.log(`🚀 SERVIDOR LISTO: http://localhost:${PORT}/login.html`));
+
