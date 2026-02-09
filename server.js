@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(bodyParser.json());
 
-// LOG DE REQUESTS (MUY ÚTIL EN RAILWAY)
+// LOG DE REQUESTS
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
   next();
@@ -30,8 +30,14 @@ console.log("📂 Sirviendo frontend desde:", publicPath);
 // Archivos estáticos
 app.use(express.static(publicPath));
 
-// Ruta raíz → LOGIN
+// Ruta raíz
 app.get("/", (req, res) => {
+  res.sendFile(path.join(publicPath, "login.html"));
+});
+
+// 🔥 FALLBACK FRONTEND (CLAVE PARA QUE NO HAYA 404)
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(publicPath, "login.html"));
 });
 
@@ -86,15 +92,11 @@ app.post("/api/login", (req, res, next) => {
       (err, r) => {
         if (err) return next(err);
         if (!r.length)
-          return res
-            .status(401)
-            .json({ mensaje: "Credenciales incorrectas" });
+          return res.status(401).json({ mensaje: "Credenciales incorrectas" });
 
         const u = r[0];
         if (u.rol !== "admin" && u.es_verificado === 0)
-          return res
-            .status(401)
-            .json({ mensaje: "Cuenta no verificada" });
+          return res.status(401).json({ mensaje: "Cuenta no verificada" });
 
         res.json({ mensaje: "Login exitoso", usuario: u });
       }
@@ -119,9 +121,7 @@ app.post("/api/usuarios", (req, res, next) => {
       (err) => {
         if (err) {
           if (err.code === "ER_DUP_ENTRY")
-            return res
-              .status(400)
-              .json({ mensaje: "Correo ya registrado" });
+            return res.status(400).json({ mensaje: "Correo ya registrado" });
           return next(err);
         }
 
@@ -236,11 +236,6 @@ app.get("/test-db", (req, res, next) => {
     if (err) return next(err);
     res.json({ ok: true });
   });
-});
-
-// ================= 404 HANDLER =================
-app.use((req, res) => {
-  res.status(404).json({ error: "Ruta no encontrada" });
 });
 
 // ================= ERROR HANDLER GLOBAL =================
