@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio | UNACH</title>
+    <link rel="icon" type="image/png" href="LOGO_U_FULLCOLOR.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa; /* Fondo gris claro suave */
+            font-family: 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+        }
+        /* --- ESTILOS DE LA BARRA LATERAL (NO TOCAR) --- */
+        .sidebar {
+            min-height: 100vh;
+            background: #2c3e50;
+            color: white;
+            width: 250px;
+            position: fixed;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        .sidebar a {
+            color: #bdc3c7;
+            text-decoration: none;
+            padding: 15px 20px;
+            display: block;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: #34495e;
+            color: #fff;
+            border-left-color: #3498db;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        /* --- ESTILOS NUEVOS PARA LA INFORMACIÓN --- */
+        .banner-container {
+            width: 100%;
+            margin-bottom: 30px;
+            display: flex;       /* Esto ayuda a centrar */
+            justify-content: center; /* Esto centra el contenido */
+        }
+        
+        .info-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .info-title {
+            color: #343a40;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .text-info-content {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar d-flex flex-column p-3">
+        <div class="text-center py-3 border-bottom border-secondary">
+    
+    <img src="logo_unach_2021-02.png" 
+         class="img-fluid" 
+         style="max-width: 180px; height: auto;">
+         
+</div>
+        <ul class="list-unstyled mt-3">
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-2 mb-1" id="tit-principal">Principal</li>
+    
+    <li><a href="dashboard.html"><i class="fas fa-home me-3"></i> <span id="txt-inicio">Inicio</span></a></li>
+    
+    
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1" id="tit-gestion">Gestión</li>
+    
+    <li id="menu-estudiantes"><a href="estudiantes.html"><i class="fas fa-user-graduate me-3"></i> <span id="txt-estudiantes">Estudiantes</span></a></li>
+    <li id="menu-docentes"><a href="docentes.html"><i class="fas fa-chalkboard-teacher me-3"></i> <span id="txt-docentes">Docentes</span></a></li>
+    <li id="menu-materias"><a href="materias.html"><i class="fas fa-book me-3"></i> <span id="txt-materias">Materias</span></a></li>
+
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1">Recursos</li>
+            <li><a href="repositorio.html"><i class="fas fa-folder-open me-3"></i> Repositorio</a></li>
+    <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1" style="font-size: 0.75rem;">Mi Cuenta</li>
+            <li><a href="perfil.html"><i class="fas fa-user-circle me-3"></i> Mi Perfil</a></li>
+</ul>
+    </div>
+
+    <div class="main-content">
+        
+        <nav class="navbar navbar-light bg-white rounded shadow-sm mb-4 p-3">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1 text-secondary">Plataforma Institucional</span>
+        
+        <div class="d-flex align-items-center gap-3">
+            
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user-circle fa-2x me-2 text-secondary"></i>
+                    <span id="user-name-display" class="fw-bold text-dark">Usuario</span>
+                </a>
+                
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li>
+                        <a class="dropdown-item" href="perfil.html">
+                            <i class="fas fa-id-card me-2 text-muted"></i> Mi Perfil
+                        </a>
+                    </li>
+
+                    <li>
+    <a class="dropdown-item" href="#" onclick="cambiarIdioma()" id="btn-idioma">
+        <i class="fas fa-globe me-2 text-muted"></i> Idioma: ES
+    </a>
+</li>
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li>
+                        <a class="dropdown-item text-danger" href="#" onclick="cerrarSesion()">
+                            <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+</nav>
+
+        <div class="banner-container" style="text-align: center; background: transparent;">
+    <img src="banner.png" 
+         alt="Banner Institucional" 
+         class="img-fluid"
+         style="width: 75%; height: auto; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+</div>
+
+        <h4 class="info-title ps-2">Información Institucional</h4>
+        
+        <div class="info-card">
+            <div class="mb-3">
+                <p class="text-info-content">
+                    Se recomienda <strong>cerrar sesión</strong> y <strong>cerrar el navegador</strong> al finalizar las actividades en la plataforma, para garantizar la seguridad de su cuenta.
+                </p>
+                <p class="text-info-content mb-0">
+                    Si alguna cuenta de correo institucional no se encuentra activa para el uso del <strong>doble autenticador</strong>, por favor notifique a la DTIC para su activación, ya que ésta medida es fundamental para proteger el acceso a los sistemas institucionales y prevenir accesos no autorizados.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 1. SEGURIDAD DE SESIÓN
+        const nombre = localStorage.getItem('usuario_nombre');
+        const rol = localStorage.getItem('usuario_rol');
+
+        if (!nombre) {
+            window.location.href = "login.html";
+        } else {
+            document.getElementById('user-name-display').innerText = nombre;
+        }
+
+        function cerrarSesion() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        // 2. SISTEMA DE PERMISOS (Para ocultar menús según rol)
+        function aplicarPermisos() {
+            const rol = localStorage.getItem('usuario_rol');
+            
+            // Si no está logueado, fuera
+            if (!rol) window.location.href = 'login.html';
+
+            // --- REGLAS DE MENÚ LATERAL ---
+            
+            // 1. ESTUDIANTES O DOCENTES:
+            if (rol === 'estudiante' || rol === 'docente' || rol === 'Docente' || rol === 'Estudiante') {
+                // AQUÍ YA NO OCULTAMOS NADA DEL MENÚ.
+                // Los estudiantes y docentes pueden ver todo el menú lateral.
+            }
+
+            // 3. ADMIN: Ve todo
+        }
+
+        // Ejecutar permisos al cargar
+        document.addEventListener("DOMContentLoaded", () => {
+            aplicarPermisos();
+        });
+
+
+// --- LÓGICA DE IDIOMA ---
+    let idiomaActual = 'es'; // Empezamos en Español
+
+    function cambiarIdioma() {
+        const btnIdioma = document.getElementById('btn-idioma');
+        
+        // Si está en Español, cambiamos a Inglés
+        if (idiomaActual === 'es') {
+            idiomaActual = 'en';
+            btnIdioma.innerHTML = '<i class="fas fa-globe me-2 text-muted"></i> Language: EN';
+            
+            // Traducir textos a INGLÉS
+            document.getElementById('tit-principal').innerText = 'Main';
+            document.getElementById('txt-inicio').innerText = 'Home';
+            // document.getElementById('txt-info').innerText = 'Information'; // Este ID no existía en el HTML
+            document.getElementById('tit-gestion').innerText = 'Management';
+            if(document.getElementById('txt-estudiantes')) document.getElementById('txt-estudiantes').innerText = 'Students';
+            if(document.getElementById('txt-docentes')) document.getElementById('txt-docentes').innerText = 'Teachers';
+            if(document.getElementById('txt-materias')) document.getElementById('txt-materias').innerText = 'Subjects';
+            // document.getElementById('txt-salir').innerText = 'Log Out'; // Este está dentro del dropdown, hay que acceder distinto o dejarlo así
+            
+            // Traducir tarjeta de información
+            const tituloInfo = document.querySelector('.info-title');
+            if(tituloInfo) tituloInfo.innerText = 'Institutional Information';
+
+        } else {
+            // Si está en Inglés, volvemos a Español
+            idiomaActual = 'es';
+            btnIdioma.innerHTML = '<i class="fas fa-globe me-2 text-muted"></i> Idioma: ES';
+            
+            // Restaurar textos a ESPAÑOL
+            document.getElementById('tit-principal').innerText = 'Principal';
+            document.getElementById('txt-inicio').innerText = 'Inicio';
+            // document.getElementById('txt-info').innerText = 'Información';
+            document.getElementById('tit-gestion').innerText = 'Gestión';
+            if(document.getElementById('txt-estudiantes')) document.getElementById('txt-estudiantes').innerText = 'Estudiantes';
+            if(document.getElementById('txt-docentes')) document.getElementById('txt-docentes').innerText = 'Docentes';
+            if(document.getElementById('txt-materias')) document.getElementById('txt-materias').innerText = 'Materias';
+            // document.getElementById('txt-salir').innerText = 'Cerrar Sesión';
+
+             // Restaurar tarjeta
+             const tituloInfo = document.querySelector('.info-title');
+             if(tituloInfo) tituloInfo.innerText = 'Información Institucional';
+        }
+    }
+
+    </script>
+
+<script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // 1. Obtener el nombre del archivo actual (ej: materias.html)
+            const path = window.location.pathname;
+            const paginaActual = path.split("/").pop(); 
+
+            // 2. Buscar todos los enlaces de la barra lateral
+            const links = document.querySelectorAll('.sidebar a');
+
+            // 3. Recorrerlos y activar el correcto
+            links.forEach(link => {
+                link.classList.remove('active'); // Limpia marcas anteriores
+                if (link.getAttribute('href') === paginaActual) {
+                    link.classList.add('active'); // Marca el actual
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

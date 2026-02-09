@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Docentes | UNACH</title>
+        <link rel="icon" type="image/png" href="LOGO_U_FULLCOLOR.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #2c3e50; color: white; width: 250px; position: fixed; }
+        .sidebar a { color: #bdc3c7; text-decoration: none; padding: 15px 20px; display: block; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: #fff; border-left-color: #3498db; }
+        .main-content { margin-left: 250px; padding: 20px; }
+
+        /* --- ESTILOS DE LA HOJA DE VIDA (PDF) --- */
+        .pdf-container {
+            background: white;
+            padding: 40px 50px;
+            font-family: 'Arial', sans-serif;
+            color: #000;
+            font-size: 11px; /* Letra un poco más legible */
+            line-height: 1.4;
+            border: 1px solid #ddd;
+        }
+        .pdf-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .pdf-section-title {
+            background-color: #e6e6e6;
+            border: 1px solid #000;
+            padding: 5px;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 11px;
+        }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: -1px; }
+        .pdf-table td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; }
+        .pdf-label { font-weight: bold; width: 150px; background-color: #f9f9f9; }
+        
+        .pdf-content-box {
+            border: 1px solid #000;
+            padding: 10px;
+            min-height: 40px;
+            white-space: pre-wrap; /* Mantiene el formato pero ajusta líneas */
+            background-color: #fff;
+        }
+
+        .firma-box { margin-top: 60px; text-align: center; }
+        .firma-linea { border-top: 1px solid #000; width: 250px; margin: 0 auto; padding-top: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar d-flex flex-column p-3">
+        <div class="text-center py-3 border-bottom border-secondary">
+            <img src="logo_unach_2021-02.png" class="img-fluid" style="max-width: 180px; height: auto;">
+        </div>
+        <ul class="list-unstyled mt-3">
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-2 mb-1" id="tit-principal">Principal</li>
+            <li><a href="dashboard.html"><i class="fas fa-home me-3"></i> <span id="txt-inicio">Inicio</span></a></li>
+            
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1" id="tit-gestion">Gestión</li>
+            <li id="menu-estudiantes"><a href="estudiantes.html"><i class="fas fa-user-graduate me-3"></i> <span id="txt-estudiantes">Estudiantes</span></a></li>
+            <li id="menu-docentes"><a href="docentes.html"><i class="fas fa-chalkboard-teacher me-3"></i> <span id="txt-docentes">Docentes</span></a></li>
+            <li id="menu-materias"><a href="materias.html"><i class="fas fa-book me-3"></i> <span id="txt-materias">Materias</span></a></li>
+
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1">Recursos</li>
+            <li><a href="repositorio.html"><i class="fas fa-folder-open me-3"></i> Repositorio</a></li>
+            <li class="small text-uppercase text-muted fw-bold px-3 mt-4 mb-1" style="font-size: 0.75rem;">Mi Cuenta</li>
+            <li><a href="perfil.html"><i class="fas fa-user-circle me-3"></i> Mi Perfil</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2 class="mb-4 text-primary"><i class="fas fa-chalkboard-teacher me-2"></i>Listado de Docentes</h2>
+        
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-primary" id="btn-nuevo-docente" onclick="abrirModalCrear()">
+                <i class="fas fa-plus me-2"></i>Nuevo Docente
+            </button>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Rol</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-docentes"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalHojaVida" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title"><i class="fas fa-file-pdf me-2"></i>Hoja de Vida Institucional</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body bg-secondary bg-opacity-25">
+            
+            <div class="pdf-container mx-auto shadow" style="max-width: 800px;">
+                
+                <div class="pdf-header">
+                    <img src="logo_unach_2021-02.png" style="height: 50px;"><br>
+                    UNIVERSIDAD NACIONAL DE CHIMBORAZO<br>
+                    DIRECCIÓN DE ADMINISTRACIÓN DEL TALENTO HUMANO<br>
+                    <span style="font-size: 14px; text-decoration: underline;">HOJA DE VIDA</span>
+                </div>
+
+                <div class="pdf-section-title">1. DATOS PERSONALES</div>
+                <table class="pdf-table">
+                    <tr>
+                        <td class="pdf-label">Nombres:</td>
+                        <td id="view_nombres" colspan="3" style="text-transform: uppercase;">--</td>
+                    </tr>
+                    <tr>
+                        <td class="pdf-label">C.I. / Pasaporte:</td>
+                        <td id="view_ci">--</td>
+                        <td class="pdf-label">F. Nacimiento:</td>
+                        <td id="view_fnac">--</td>
+                    </tr>
+                    <tr>
+                        <td class="pdf-label">Cargo:</td>
+                        <td colspan="3" id="view_cargo" style="text-transform: uppercase;">DOCENTE</td>
+                    </tr>
+                    <tr>
+                        <td class="pdf-label">E-mail Institucional:</td>
+                        <td id="view_email_inst">--</td>
+                        <td class="pdf-label">E-mail Personal:</td>
+                        <td id="view_email_pers">--</td>
+                    </tr>
+                    <tr>
+                        <td class="pdf-label">Domicilio:</td>
+                        <td colspan="3" id="view_domicilio" style="text-transform: uppercase;">--</td>
+                    </tr>
+                    <tr>
+                        <td class="pdf-label">Teléfono Oficina:</td>
+                        <td id="view_tlf_oficina">--</td>
+                        <td class="pdf-label">Celular:</td>
+                        <td id="view_celular">--</td>
+                    </tr>
+                </table>
+
+                <div class="pdf-section-title">2. FORMACIÓN ACADÉMICA</div>
+                <div id="view_formacion" class="pdf-content-box"></div>
+
+                <div class="pdf-section-title">3. EXPERIENCIA PROFESIONAL Y DOCENTE</div>
+                <div id="view_experiencia" class="pdf-content-box"></div>
+
+                <div class="pdf-section-title">4. CAPACITACIÓN</div>
+                <div id="view_capacitacion" class="pdf-content-box"></div>
+
+                <div class="pdf-section-title">5. PUBLICACIONES CIENTÍFICAS</div>
+                <div id="view_publicaciones" class="pdf-content-box"></div>
+
+                <div class="firma-box">
+                    Ciudad: Riobamba, <span id="view_fecha_hoy"></span>
+                    <br><br><br><br>
+                    <div class="firma-linea">
+                        <span id="view_firma_nombre">NOMBRE DEL DOCENTE</span><br>
+                        <span style="font-weight: normal;">DOCENTE / INVESTIGADOR</span>
+                    </div>
+                </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fas fa-print me-2"></i>Imprimir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalEditar" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Editar Información</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit_id">
+            
+            <div class="row mb-3">
+                <div class="col-md-6"><label>Nombre</label><input type="text" id="edit_nombre" class="form-control"></div>
+                <div class="col-md-6"><label>Correo</label><input type="email" id="edit_correo" class="form-control"></div>
+            </div>
+
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+              <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-personal">Datos</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-info">Información Académica</button></li>
+            </ul>
+
+            <div class="tab-content p-3 border border-top-0">
+                <div class="tab-pane fade show active" id="tab-personal">
+                    <div class="row g-2">
+                        <div class="col-4"><label>C.I.</label><input type="text" id="hv_ci" class="form-control form-control-sm"></div>
+                        <div class="col-4"><label>Celular</label><input type="text" id="hv_celular" class="form-control form-control-sm"></div>
+                        <div class="col-4"><label>F. Nacimiento</label><input type="date" id="hv_fnac" class="form-control form-control-sm"></div>
+                        <div class="col-12"><label>Domicilio</label><input type="text" id="hv_domicilio" class="form-control form-control-sm"></div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="tab-info">
+                    <label>Formación (Títulos)</label><textarea id="hv_formacion" class="form-control mb-2" rows="3"></textarea>
+                    <label>Experiencia</label><textarea id="hv_experiencia" class="form-control mb-2" rows="3"></textarea>
+                    <label>Publicaciones</label><textarea id="hv_publicaciones" class="form-control mb-2" rows="3"></textarea>
+                    <label>Capacitación</label><textarea id="hv_capacitacion" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalCrear" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">Nuevo Docente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" id="nuevo_nombre" class="form-control mb-2" placeholder="Nombre">
+            <input type="email" id="nuevo_correo" class="form-control mb-2" placeholder="Correo">
+            <input type="password" id="nuevo_password" class="form-control" placeholder="Contraseña">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-success" onclick="guardarNuevoDocente()">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // --- 1. CARGAR DOCENTES ---
+        async function cargarDocentes() {
+            try {
+                const res = await fetch('http://localhost:3000/api/usuarios');
+                const usuarios = await res.json();
+                const docentes = usuarios.filter(u => u.rol.toLowerCase() === 'docente');
+                const tabla = document.getElementById('tabla-docentes');
+                tabla.innerHTML = '';
+
+                docentes.forEach((d, index) => {
+                    tabla.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td class="fw-bold">${d.nombre}</td>
+                            <td>${d.correo}</td>
+                            <td><span class="badge bg-info text-dark">Docente</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-info me-1" onclick="verHojaVida(${d.id})"><i class="fas fa-eye text-white"></i> Ver CV</button>
+                                <button class="btn btn-sm btn-outline-primary me-1 btn-accion" onclick="abrirModalEditar(${d.id})"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-outline-danger btn-accion" onclick="eliminarUsuario(${d.id})"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                aplicarPermisos();
+            } catch (error) { console.error("Error:", error); }
+        }
+
+        // --- 2. VER HOJA DE VIDA (SOLUCIÓN AL TEXTO FEO) ---
+        async function verHojaVida(id) {
+            try {
+                // Pedimos datos frescos al servidor
+                const res = await fetch(`http://localhost:3000/api/usuarios/${id}`);
+                const d = await res.json();
+                
+                let hv = {};
+                // Intentamos leer el JSON. Si falla, usaremos el texto crudo.
+                try { 
+                    hv = JSON.parse(d.hoja_vida || '{}'); 
+                } catch(e) { 
+                    // Si no es JSON, creamos un objeto con el texto crudo en 'otros'
+                    hv = { publicaciones: d.hoja_vida }; 
+                }
+
+                // Llenamos el Modal Estilo PDF
+                document.getElementById('view_nombres').innerText = d.nombre;
+                document.getElementById('view_email_inst').innerText = d.correo;
+                
+                document.getElementById('view_ci').innerText = hv.ci || '--';
+                document.getElementById('view_fnac').innerText = hv.fnac || '--';
+                document.getElementById('view_domicilio').innerText = hv.domicilio || '--';
+                document.getElementById('view_tlf_oficina').innerText = hv.tlf_oficina || '--';
+                document.getElementById('view_celular').innerText = hv.celular || '--';
+                document.getElementById('view_email_pers').innerText = hv.email_pers || '--';
+
+                // Función mágica para que se vea bonito (reemplaza 'Enter' por saltos de línea)
+                const formatear = (texto) => (texto || 'Sin información registrada.').replace(/\n/g, '<br>');
+
+                document.getElementById('view_formacion').innerHTML = formatear(hv.formacion);
+                document.getElementById('view_experiencia').innerHTML = formatear(hv.experiencia);
+                document.getElementById('view_capacitacion').innerHTML = formatear(hv.capacitacion);
+                document.getElementById('view_publicaciones').innerHTML = formatear(hv.publicaciones);
+                
+                // Fecha actual
+                const hoy = new Date();
+                document.getElementById('view_fecha_hoy').innerText = hoy.toLocaleDateString();
+                document.getElementById('view_firma_nombre').innerText = d.nombre.toUpperCase();
+
+                new bootstrap.Modal(document.getElementById('modalHojaVida')).show();
+            } catch(e) { console.error(e); alert("Error al cargar datos"); }
+        }
+
+        // --- 3. EDITAR DOCENTE ---
+        let modalEdicion;
+        async function abrirModalEditar(id) {
+            const res = await fetch(`http://localhost:3000/api/usuarios/${id}`);
+            const d = await res.json();
+            let hv = {};
+            try { hv = JSON.parse(d.hoja_vida || '{}'); } catch(e) { hv = {}; }
+
+            document.getElementById('edit_id').value = d.id;
+            document.getElementById('edit_nombre').value = d.nombre;
+            document.getElementById('edit_correo').value = d.correo;
+
+            // Cargar datos en el formulario
+            document.getElementById('hv_ci').value = hv.ci || '';
+            document.getElementById('hv_celular').value = hv.celular || '';
+            document.getElementById('hv_fnac').value = hv.fnac || '';
+            document.getElementById('hv_domicilio').value = hv.domicilio || '';
+            document.getElementById('hv_formacion').value = hv.formacion || '';
+            document.getElementById('hv_experiencia').value = hv.experiencia || '';
+            document.getElementById('hv_publicaciones').value = hv.publicaciones || '';
+            document.getElementById('hv_capacitacion').value = hv.capacitacion || '';
+
+            modalEdicion = new bootstrap.Modal(document.getElementById('modalEditar'));
+            modalEdicion.show();
+        }
+
+        async function guardarEdicion() {
+            const id = document.getElementById('edit_id').value;
+            const hojaVidaObj = {
+                ci: document.getElementById('hv_ci').value,
+                celular: document.getElementById('hv_celular').value,
+                fnac: document.getElementById('hv_fnac').value,
+                domicilio: document.getElementById('hv_domicilio').value,
+                formacion: document.getElementById('hv_formacion').value,
+                experiencia: document.getElementById('hv_experiencia').value,
+                publicaciones: document.getElementById('hv_publicaciones').value,
+                capacitacion: document.getElementById('hv_capacitacion').value
+            };
+
+            const datos = {
+                nombre: document.getElementById('edit_nombre').value,
+                correo: document.getElementById('edit_correo').value,
+                hoja_vida: JSON.stringify(hojaVidaObj),
+                rol: 'docente'
+            };
+
+            await fetch(`http://localhost:3000/api/usuarios/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+            modalEdicion.hide();
+            cargarDocentes();
+        }
+
+        // --- OTROS ---
+        async function guardarNuevoDocente() {
+            const nombre = document.getElementById('nuevo_nombre').value;
+            const correo = document.getElementById('nuevo_correo').value;
+            const password = document.getElementById('nuevo_password').value;
+            await fetch('http://localhost:3000/api/usuarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, correo, password, rol: 'docente' })
+            });
+            location.reload();
+        }
+
+        async function eliminarUsuario(id) {
+            if(confirm("¿Eliminar?")) {
+                await fetch(`http://localhost:3000/api/usuarios/${id}`, { method: 'DELETE' });
+                cargarDocentes();
+            }
+        }
+
+        function aplicarPermisos() {
+            const rol = localStorage.getItem('usuario_rol');
+            if (!rol) window.location.href = 'login.html';
+            // Estudiantes ven la lista y el CV, pero no editan ni borran
+            if (rol === 'estudiante') {
+                document.querySelectorAll('.btn-accion, #btn-nuevo-docente').forEach(b => b.style.display = 'none');
+            }
+        }
+        function cerrarSesion() { localStorage.clear(); window.location.href = "login.html"; }
+
+        document.addEventListener("DOMContentLoaded", () => cargarDocentes());
+    </script>
+
+    <script>
+        // Script para el menú activo
+        document.addEventListener("DOMContentLoaded", () => {
+            const path = window.location.pathname;
+            const paginaActual = path.split("/").pop(); 
+            const links = document.querySelectorAll('.sidebar a');
+            links.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === paginaActual) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
