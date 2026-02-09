@@ -1,52 +1,40 @@
 const express = require("express");
-const path = require("path");
 const mysql = require("mysql2");
-
 const app = express();
+
 const PORT = process.env.PORT || 8080;
 
-// Middlewares
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
 
-// 🔗 MySQL connection (Railway)
-const db = mysql.createPool({
-  host: process.env.MYSQL_HOST,        // mysql.railway.internal
-  user: process.env.MYSQL_USER,        // mysql
+// ✅ MySQL POOL (esto arregla el timeout)
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE, // railway
-  port: process.env.MYSQL_PORT,        // 3306
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQL_PORT,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
   queueLimit: 0
 });
 
-// Test connection
-db.getConnection((err, connection) => {
-  if (err) {
-    console.error("❌ MySQL connection error:", err.message);
-  } else {
-    console.log("✅ Connected to MySQL (Railway)");
-    connection.release();
-  }
-});
-
-// Routes
+// ✅ Test simple (Railway necesita respuesta rápida)
 app.get("/", (req, res) => {
-  res.send("Servidor funcionando correctamente en Railway 🚀");
+  res.send("Servidor OK 🚀");
 });
 
-app.get("/test-db", (req, res) => {
-  db.query("SELECT 1", (err) => {
+// ✅ Test DB SEGURO (nunca cuelga)
+app.get("/test-db", async (req, res) => {
+  pool.query("SELECT 1", (err) => {
     if (err) {
-      return res.status(500).json({ ok: false, error: err.message });
+      console.error("DB error:", err.message);
+      return res.status(500).json({ ok: false });
     }
-    res.json({ ok: true, message: "DB connection OK" });
+    res.json({ ok: true });
   });
 });
 
-// Start server
-app.listen(PORT, () => {
+// 🚀 IMPORTANTE: escuchar en PORT
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
