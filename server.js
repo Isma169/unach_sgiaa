@@ -1,4 +1,6 @@
 // ================= IMPORTS =================
+console.log("🔥 SERVER INICIANDO...");
+
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
@@ -15,17 +17,22 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(bodyParser.json());
 
-// LOG DE REQUESTS (NO QUITAR EN RAILWAY)
+// LOG DE REQUESTS (MUY ÚTIL EN RAILWAY)
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
   next();
 });
 
 // ================= FRONTEND (LOGIN) =================
-app.use(express.static(path.join(__dirname, "public")));
+const publicPath = path.join(__dirname, "public");
+console.log("📂 Sirviendo frontend desde:", publicPath);
 
+// Archivos estáticos
+app.use(express.static(publicPath));
+
+// Ruta raíz → LOGIN
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+  res.sendFile(path.join(publicPath, "login.html"));
 });
 
 // ================= MYSQL (RAILWAY) =================
@@ -46,8 +53,11 @@ db.connect((err) => {
 });
 
 // ================= UPLOADS =================
-const uploadDir = path.join(__dirname, "public/uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = path.join(publicPath, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("📁 Carpeta uploads creada");
+}
 
 const storage = multer.diskStorage({
   destination: uploadDir,
@@ -66,125 +76,153 @@ const transporter = nodemailer.createTransport({
 });
 
 // ================= AUTH =================
-app.post("/api/login", (req, res) => {
-  const { correo, password } = req.body;
-  db.query(
-    "SELECT * FROM usuarios WHERE correo=? AND password=?",
-    [correo, password],
-    (err, r) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (!r.length)
-        return res.status(401).json({ mensaje: "Credenciales incorrectas" });
+app.post("/api/login", (req, res, next) => {
+  try {
+    const { correo, password } = req.body;
 
-      const u = r[0];
-      if (u.rol !== "admin" && u.es_verificado === 0)
-        return res
-          .status(401)
-          .json({ mensaje: "Cuenta no verificada" });
+    db.query(
+      "SELECT * FROM usuarios WHERE correo=? AND password=?",
+      [correo, password],
+      (err, r) => {
+        if (err) return next(err);
+        if (!r.length)
+          return res
+            .status(401)
+            .json({ mensaje: "Credenciales incorrectas" });
 
-      res.json({ mensaje: "Login exitoso", usuario: u });
-    }
-  );
+        const u = r[0];
+        if (u.rol !== "admin" && u.es_verificado === 0)
+          return res
+            .status(401)
+            .json({ mensaje: "Cuenta no verificada" });
+
+        res.json({ mensaje: "Login exitoso", usuario: u });
+      }
+    );
+  } catch (e) {
+    next(e);
+  }
 });
 
 // ================= USUARIOS =================
-app.post("/api/usuarios", (req, res) => {
-  const { nombre, correo, password, rol } = req.body;
-  if (!nombre || !correo || !password || !rol)
-    return res.status(400).json({ mensaje: "Datos incompletos" });
+app.post("/api/usuarios", (req, res, next) => {
+  try {
+    const { nombre, correo, password, rol } = req.body;
+    if (!nombre || !correo || !password || !rol)
+      return res.status(400).json({ mensaje: "Datos incompletos" });
 
-  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
-  db.query(
-    "INSERT INTO usuarios (nombre,correo,password,rol,codigo_verificacion,es_verificado) VALUES (?,?,?,?,?,0)",
-    [nombre, correo, password, rol, codigo],
-    (err) => {
-      if (err) {
-        if (err.code === "ER_DUP_ENTRY")
-          return res
-            .status(400)
-            .json({ mensaje: "Correo ya registrado" });
-        return res.status(500).json({ mensaje: "Error BD" });
+    db.query(
+      "INSERT INTO usuarios (nombre,correo,password,rol,codigo_verificacion,es_verificado) VALUES (?,?,?,?,?,0)",
+      [nombre, correo, password, rol, codigo],
+      (err) => {
+        if (err) {
+          if (err.code === "ER_DUP_ENTRY")
+            return res
+              .status(400)
+              .json({ mensaje: "Correo ya registrado" });
+          return next(err);
+        }
+
+        transporter.sendMail({
+          from: "SGIAAIR",
+          to: correo,
+          subject: "Código de Verificación",
+          html: `<h3>Tu código es <b>${codigo}</b></h3>`,
+        });
+
+        res.json({ mensaje: "Código enviado", correo });
       }
-
-      transporter.sendMail({
-        from: "SGIAAIR",
-        to: correo,
-        subject: "Código de Verificación",
-        html: `<h3>Tu código es <b>${codigo}</b></h3>`,
-      });
-
-      res.json({ mensaje: "Código enviado", correo });
-    }
-  );
+    );
+  } catch (e) {
+    next(e);
+  }
 });
 
-app.post("/api/verificar", (req, res) => {
-  const { correo, codigo } = req.body;
-  db.query(
-    "SELECT * FROM usuarios WHERE correo=? AND codigo_verificacion=?",
-    [correo, codigo],
-    (err, r) => {
-      if (!r.length)
-        return res.status(400).json({ mensaje: "Código incorrecto" });
+app.post("/api/verificar", (req, res, next) => {
+  try {
+    const { correo, codigo } = req.body;
+    db.query(
+      "SELECT * FROM usuarios WHERE correo=? AND codigo_verificacion=?",
+      [correo, codigo],
+      (err, r) => {
+        if (err) return next(err);
+        if (!r.length)
+          return res.status(400).json({ mensaje: "Código incorrecto" });
 
-      db.query(
-        "UPDATE usuarios SET es_verificado=1 WHERE correo=?",
-        [correo],
-        () => res.json({ mensaje: "Cuenta verificada" })
-      );
-    }
-  );
+        db.query(
+          "UPDATE usuarios SET es_verificado=1 WHERE correo=?",
+          [correo],
+          () => res.json({ mensaje: "Cuenta verificada" })
+        );
+      }
+    );
+  } catch (e) {
+    next(e);
+  }
 });
 
-app.get("/api/usuarios", (req, res) => {
-  db.query("SELECT * FROM usuarios", (err, r) => res.json(r || []));
+app.get("/api/usuarios", (req, res, next) => {
+  db.query("SELECT * FROM usuarios", (err, r) => {
+    if (err) return next(err);
+    res.json(r || []);
+  });
 });
 
 // ================= MATERIAS =================
-app.get("/api/materias", (req, res) => {
-  db.query("SELECT * FROM materias", (err, r) => res.json(r || []));
+app.get("/api/materias", (req, res, next) => {
+  db.query("SELECT * FROM materias", (err, r) => {
+    if (err) return next(err);
+    res.json(r || []);
+  });
 });
 
-app.post("/api/materias", (req, res) => {
+app.post("/api/materias", (req, res, next) => {
   const { nombre, codigo, semestre } = req.body;
   db.query(
     "INSERT INTO materias VALUES (NULL,?,?,?)",
     [nombre, codigo, semestre],
-    () => res.json({ mensaje: "Creada" })
+    (err) => {
+      if (err) return next(err);
+      res.json({ mensaje: "Creada" });
+    }
   );
 });
 
 // ================= REPOSITORIO =================
-app.get("/api/repositorio", (req, res) => {
+app.get("/api/repositorio", (req, res, next) => {
   db.query(
     `SELECT r.*, IFNULL(u.nombre,'Desconocido') autor
      FROM repositorio r LEFT JOIN usuarios u ON r.usuario_id=u.id
      ORDER BY r.id DESC`,
-    (err, r) => res.json(r || [])
+    (err, r) => {
+      if (err) return next(err);
+      res.json(r || []);
+    }
   );
 });
 
-app.post(
-  "/api/repositorio",
-  upload.single("archivo"),
-  (req, res) => {
-    if (!req.file)
-      return res.status(400).json({ mensaje: "Archivo requerido" });
+app.post("/api/repositorio", upload.single("archivo"), (req, res, next) => {
+  if (!req.file)
+    return res.status(400).json({ mensaje: "Archivo requerido" });
 
-    db.query(
-      "INSERT INTO repositorio (titulo,nombre_archivo,usuario_id) VALUES (?,?,?)",
-      [req.body.titulo, req.file.filename, req.body.usuario_id],
-      () => res.json({ mensaje: "Archivo subido" })
-    );
-  }
-);
+  db.query(
+    "INSERT INTO repositorio (titulo,nombre_archivo,usuario_id) VALUES (?,?,?)",
+    [req.body.titulo, req.file.filename, req.body.usuario_id],
+    (err) => {
+      if (err) return next(err);
+      res.json({ mensaje: "Archivo subido" });
+    }
+  );
+});
 
 // ================= STATS =================
-app.get("/api/stats", (req, res) => {
+app.get("/api/stats", (req, res, next) => {
   db.query(
     "SELECT rol,COUNT(*) total FROM usuarios GROUP BY rol",
     (err, r) => {
+      if (err) return next(err);
       const s = { admin: 0, docente: 0, estudiante: 0 };
       if (r) r.forEach((x) => (s[x.rol] = x.total));
       res.json(s);
@@ -193,10 +231,24 @@ app.get("/api/stats", (req, res) => {
 });
 
 // ================= TEST =================
-app.get("/test-db", (req, res) => {
+app.get("/test-db", (req, res, next) => {
   db.query("SELECT 1", (err) => {
-    if (err) return res.status(500).json({ ok: false });
+    if (err) return next(err);
     res.json({ ok: true });
+  });
+});
+
+// ================= 404 HANDLER =================
+app.use((req, res) => {
+  res.status(404).json({ error: "Ruta no encontrada" });
+});
+
+// ================= ERROR HANDLER GLOBAL =================
+app.use((err, req, res, next) => {
+  console.error("🔥 ERROR GLOBAL:", err.message);
+  res.status(500).json({
+    error: "Error interno del servidor",
+    detalle: err.message,
   });
 });
 
