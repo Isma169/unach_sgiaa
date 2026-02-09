@@ -3,25 +3,38 @@ const path = require("path");
 const mysql = require("mysql2");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ CONEXIÓN CORRECTA EN RAILWAY
-const db = mysql.createConnection(process.env.MYSQL_URL);
+// 🔗 MySQL connection (Railway)
+const db = mysql.createPool({
+  host: process.env.MYSQL_HOST,        // mysql.railway.internal
+  user: process.env.MYSQL_USER,        // mysql
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE, // railway
+  port: process.env.MYSQL_PORT,        // 3306
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
-db.connect((err) => {
+// Test connection
+db.getConnection((err, connection) => {
   if (err) {
-    console.error("MySQL connection error:", err.message);
+    console.error("❌ MySQL connection error:", err.message);
   } else {
-    console.log("✅ Connected to MySQL");
+    console.log("✅ Connected to MySQL (Railway)");
+    connection.release();
   }
 });
 
+// Routes
 app.get("/", (req, res) => {
-  res.send("Servidor funcionando correctamente en Railway");
+  res.send("Servidor funcionando correctamente en Railway 🚀");
 });
 
 app.get("/test-db", (req, res) => {
@@ -29,10 +42,11 @@ app.get("/test-db", (req, res) => {
     if (err) {
       return res.status(500).json({ ok: false, error: err.message });
     }
-    res.json({ ok: true });
+    res.json({ ok: true, message: "DB connection OK" });
   });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
