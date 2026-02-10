@@ -4,18 +4,17 @@ console.log("🔥 SERVER INICIANDO...");
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const multer = require("multer");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 // ================= MIDDLEWARE =================
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
 // LOG DE REQUESTS
 app.use((req, res, next) => {
@@ -23,36 +22,36 @@ app.use((req, res, next) => {
   next();
 });
 
-// ================= FRONTEND (LOGIN) =================
-const publicPath = path.join(__dirname, "public");
-console.log("📂 Sirviendo frontend desde:", publicPath);
+// ================= MYSQL (RAILWAY) =================
+if (!process.env.MYSQL_URL) {
+  console.error("❌ MYSQL_URL no definida en Railway");
+  process.exit(1);
+}
 
-// Archivos estáticos
-app.use(express.static(publicPath));
+const db = mysql.createPool(process.env.MYSQL_URL);
 
-// Ruta raíz
-app.get("/", (req, res) => {
-  res.sendFile(path.join(publicPath, "login.html"));
-});
-
-// 🔥 FALLBACK FRONTEND (SOLO GET, NO INTERFIERE CON API)
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(publicPath, "login.html"));
-});
-
-// ================= MYSQL (RAILWAY - MYSQL_URL) =================
-const db = mysql.createConnection(process.env.MYSQL_URL);
-
-db.connect((err) => {
+db.getConnection((err, conn) => {
   if (err) {
     console.error("❌ MySQL error:", err.message);
   } else {
     console.log("✅ Connected to MySQL (Railway)");
+    conn.release();
   }
 });
 
+// ================= MAIL =================
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
+
 // ================= UPLOADS =================
+const publicPath = path.join(__dirname, "public");
 const uploadDir = path.join(publicPath, "uploads");
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("📁 Carpeta uploads creada");
@@ -65,16 +64,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ================= MAIL =================
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
+// =================================================
+// ===================== API =======================
+// =================================================
 
-// ================= AUTH =================
+// ---------- LOGIN ----------
 app.post("/api/login", (req, res, next) => {
   const { correo, password } = req.body;
 
@@ -95,7 +89,7 @@ app.post("/api/login", (req, res, next) => {
   );
 });
 
-// ================= USUARIOS =================
+// ---------- USUARIOS ----------
 app.post("/api/usuarios", (req, res, next) => {
   const { nombre, correo, password, rol } = req.body;
   if (!nombre || !correo || !password || !rol)
@@ -113,7 +107,6 @@ app.post("/api/usuarios", (req, res, next) => {
         return next(err);
       }
 
-      // ENVÍO DE CORREO (NO BLOQUEA)
       transporter.sendMail(
         {
           from: "SGIAAIR",
@@ -121,11 +114,7 @@ app.post("/api/usuarios", (req, res, next) => {
           subject: "Código de Verificación",
           html: `<h3>Tu código es <b>${codigo}</b></h3>`,
         },
-        (mailErr) => {
-          if (mailErr) {
-            console.error("✉️ Error enviando correo:", mailErr.message);
-          }
-        }
+        () => {}
       );
 
       res.json({ mensaje: "Código enviado", correo });
@@ -153,7 +142,6 @@ app.post("/api/verificar", (req, res, next) => {
   );
 });
 
-// ================= USUARIOS LISTADO =================
 app.get("/api/usuarios", (req, res, next) => {
   db.query("SELECT * FROM usuarios", (err, r) => {
     if (err) return next(err);
@@ -161,7 +149,7 @@ app.get("/api/usuarios", (req, res, next) => {
   });
 });
 
-// ================= MATERIAS =================
+// ---------- MATERIAS ----------
 app.get("/api/materias", (req, res, next) => {
   db.query("SELECT * FROM materias", (err, r) => {
     if (err) return next(err);
@@ -169,19 +157,7 @@ app.get("/api/materias", (req, res, next) => {
   });
 });
 
-app.post("/api/materias", (req, res, next) => {
-  const { nombre, codigo, semestre } = req.body;
-  db.query(
-    "INSERT INTO materias VALUES (NULL,?,?,?)",
-    [nombre, codigo, semestre],
-    (err) => {
-      if (err) return next(err);
-      res.json({ mensaje: "Creada" });
-    }
-  );
-});
-
-// ================= REPOSITORIO =================
+// ---------- REPOSITORIO ----------
 app.get("/api/repositorio", (req, res, next) => {
   db.query(
     `SELECT r.*, IFNULL(u.nombre,'Desconocido') autor
@@ -208,7 +184,7 @@ app.post("/api/repositorio", upload.single("archivo"), (req, res, next) => {
   );
 });
 
-// ================= STATS =================
+// ---------- STATS ----------
 app.get("/api/stats", (req, res, next) => {
   db.query(
     "SELECT rol,COUNT(*) total FROM usuarios GROUP BY rol",
@@ -221,15 +197,19 @@ app.get("/api/stats", (req, res, next) => {
   );
 });
 
-// ================= TEST =================
-app.get("/test-db", (req, res, next) => {
-  db.query("SELECT 1", (err) => {
-    if (err) return next(err);
-    res.json({ ok: true });
-  });
+// ================= FRONTEND =================
+console.log("📂 Sirviendo frontend desde:", publicPath);
+app.use(express.static(publicPath));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(publicPath, "login.html"));
 });
 
-// ================= ERROR HANDLER GLOBAL =================
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(publicPath, "login.html"));
+});
+
+// ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
   console.error("🔥 ERROR GLOBAL:", err.message);
   res.status(500).json({
