@@ -35,9 +35,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(publicPath, "login.html"));
 });
 
-// 🔥 FALLBACK FRONTEND
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) return next();
+// 🔥 FALLBACK FRONTEND CORREGIDO (SOLO GET, NO INTERFIERE CON API)
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(publicPath, "login.html"));
 });
 
@@ -125,7 +124,7 @@ app.post("/api/usuarios", (req, res, next) => {
           return next(err);
         }
 
-        // ✅ CORRECCIÓN: ENVÍO DE CORREO SEGURO (NO TUMBA EL SERVIDOR)
+        // ENVÍO DE CORREO SEGURO (NO TUMBA EL SERVIDOR)
         transporter.sendMail(
           {
             from: "SGIAAIR",
@@ -133,16 +132,13 @@ app.post("/api/usuarios", (req, res, next) => {
             subject: "Código de Verificación",
             html: `<h3>Tu código es <b>${codigo}</b></h3>`,
           },
-          (mailErr, info) => {
+          (mailErr) => {
             if (mailErr) {
               console.error("✉️ Error enviando correo:", mailErr.message);
-            } else {
-              console.log("✉️ Correo enviado:", info.response);
             }
           }
         );
 
-        // RESPUESTA SIEMPRE
         res.json({ mensaje: "Código enviado", correo });
       }
     );
