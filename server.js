@@ -35,25 +35,19 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(publicPath, "login.html"));
 });
 
-// 🔥 FALLBACK FRONTEND CORREGIDO (SOLO GET, NO INTERFIERE CON API)
+// 🔥 FALLBACK FRONTEND (SOLO GET, NO INTERFIERE CON API)
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(publicPath, "login.html"));
 });
 
-// ================= MYSQL (RAILWAY) =================
-const db = mysql.createConnection({
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-  port: process.env.MYSQL_PORT,
-});
+// ================= MYSQL (RAILWAY - MYSQL_URL) =================
+const db = mysql.createConnection(process.env.MYSQL_URL);
 
 db.connect((err) => {
   if (err) {
     console.error("❌ MySQL error:", err.message);
   } else {
-    console.log("✅ Connected to MySQL");
+    console.log("✅ Connected to MySQL (Railway)");
   }
 });
 
@@ -82,94 +76,84 @@ const transporter = nodemailer.createTransport({
 
 // ================= AUTH =================
 app.post("/api/login", (req, res, next) => {
-  try {
-    const { correo, password } = req.body;
+  const { correo, password } = req.body;
 
-    db.query(
-      "SELECT * FROM usuarios WHERE correo=? AND password=?",
-      [correo, password],
-      (err, r) => {
-        if (err) return next(err);
-        if (!r.length)
-          return res.status(401).json({ mensaje: "Credenciales incorrectas" });
+  db.query(
+    "SELECT * FROM usuarios WHERE correo=? AND password=?",
+    [correo, password],
+    (err, r) => {
+      if (err) return next(err);
+      if (!r.length)
+        return res.status(401).json({ mensaje: "Credenciales incorrectas" });
 
-        const u = r[0];
-        if (u.rol !== "admin" && u.es_verificado === 0)
-          return res.status(401).json({ mensaje: "Cuenta no verificada" });
+      const u = r[0];
+      if (u.rol !== "admin" && u.es_verificado === 0)
+        return res.status(401).json({ mensaje: "Cuenta no verificada" });
 
-        res.json({ mensaje: "Login exitoso", usuario: u });
-      }
-    );
-  } catch (e) {
-    next(e);
-  }
+      res.json({ mensaje: "Login exitoso", usuario: u });
+    }
+  );
 });
 
 // ================= USUARIOS =================
 app.post("/api/usuarios", (req, res, next) => {
-  try {
-    const { nombre, correo, password, rol } = req.body;
-    if (!nombre || !correo || !password || !rol)
-      return res.status(400).json({ mensaje: "Datos incompletos" });
+  const { nombre, correo, password, rol } = req.body;
+  if (!nombre || !correo || !password || !rol)
+    return res.status(400).json({ mensaje: "Datos incompletos" });
 
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
-    db.query(
-      "INSERT INTO usuarios (nombre,correo,password,rol,codigo_verificacion,es_verificado) VALUES (?,?,?,?,?,0)",
-      [nombre, correo, password, rol, codigo],
-      (err) => {
-        if (err) {
-          if (err.code === "ER_DUP_ENTRY")
-            return res.status(400).json({ mensaje: "Correo ya registrado" });
-          return next(err);
-        }
-
-        // ENVÍO DE CORREO SEGURO (NO TUMBA EL SERVIDOR)
-        transporter.sendMail(
-          {
-            from: "SGIAAIR",
-            to: correo,
-            subject: "Código de Verificación",
-            html: `<h3>Tu código es <b>${codigo}</b></h3>`,
-          },
-          (mailErr) => {
-            if (mailErr) {
-              console.error("✉️ Error enviando correo:", mailErr.message);
-            }
-          }
-        );
-
-        res.json({ mensaje: "Código enviado", correo });
+  db.query(
+    "INSERT INTO usuarios (nombre,correo,password,rol,codigo_verificacion,es_verificado) VALUES (?,?,?,?,?,0)",
+    [nombre, correo, password, rol, codigo],
+    (err) => {
+      if (err) {
+        if (err.code === "ER_DUP_ENTRY")
+          return res.status(400).json({ mensaje: "Correo ya registrado" });
+        return next(err);
       }
-    );
-  } catch (e) {
-    next(e);
-  }
+
+      // ENVÍO DE CORREO (NO BLOQUEA)
+      transporter.sendMail(
+        {
+          from: "SGIAAIR",
+          to: correo,
+          subject: "Código de Verificación",
+          html: `<h3>Tu código es <b>${codigo}</b></h3>`,
+        },
+        (mailErr) => {
+          if (mailErr) {
+            console.error("✉️ Error enviando correo:", mailErr.message);
+          }
+        }
+      );
+
+      res.json({ mensaje: "Código enviado", correo });
+    }
+  );
 });
 
 app.post("/api/verificar", (req, res, next) => {
-  try {
-    const { correo, codigo } = req.body;
-    db.query(
-      "SELECT * FROM usuarios WHERE correo=? AND codigo_verificacion=?",
-      [correo, codigo],
-      (err, r) => {
-        if (err) return next(err);
-        if (!r.length)
-          return res.status(400).json({ mensaje: "Código incorrecto" });
+  const { correo, codigo } = req.body;
 
-        db.query(
-          "UPDATE usuarios SET es_verificado=1 WHERE correo=?",
-          [correo],
-          () => res.json({ mensaje: "Cuenta verificada" })
-        );
-      }
-    );
-  } catch (e) {
-    next(e);
-  }
+  db.query(
+    "SELECT * FROM usuarios WHERE correo=? AND codigo_verificacion=?",
+    [correo, codigo],
+    (err, r) => {
+      if (err) return next(err);
+      if (!r.length)
+        return res.status(400).json({ mensaje: "Código incorrecto" });
+
+      db.query(
+        "UPDATE usuarios SET es_verificado=1 WHERE correo=?",
+        [correo],
+        () => res.json({ mensaje: "Cuenta verificada" })
+      );
+    }
+  );
 });
 
+// ================= USUARIOS LISTADO =================
 app.get("/api/usuarios", (req, res, next) => {
   db.query("SELECT * FROM usuarios", (err, r) => {
     if (err) return next(err);
